@@ -8,23 +8,25 @@ public class GameController : MonoBehaviour
 {
     public enum Piece
     {
-        Empty = 0,
-        PlayerOne = 1,
-        PlayerTwo = 2
+        Empty,
+        PlayerOne,
+        PlayerTwo
     }
 
-    public AI playerOneAI;
-    [HideInInspector]
-    public AI playerTwoAI;
+    public bool PlayerVsAI = true;
+    public string PlayerOneName = "You";
+    public string PlayerTwoName = "Dummy AI";
+
+
+
+    private PlayerOneAI playerOneAI;
+    private PlayerTwoAI playerTwoAI;
 
     public GameObject playerOnePiece;
     public GameObject playerTwoPiece;
 
     public GameObject pieceField;
     public GameObject winningText;
-
-    public string PlayerOneName = "You";
-    public string PlayerTwoName = "Dummy AI";
 
     string playerWonText = "Winner:";
     string drawText = "draw!";
@@ -50,6 +52,7 @@ public class GameController : MonoBehaviour
 
     void Start()
     {
+        ConfigurePlayers();
         AdjustNumPiecesToWin();
 
         isLoading = true;
@@ -84,7 +87,9 @@ public class GameController : MonoBehaviour
             Vector3 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             currentPiece.transform.position = new Vector3(
                 Mathf.Clamp(pos.x, 0, Config.numColumns - 1),
-                gameObjectField.transform.position.y + 1, 0);
+                gameObjectField.transform.position.y + 1, 
+                0
+            );
 
             GetUserInput();
         }
@@ -92,6 +97,12 @@ public class GameController : MonoBehaviour
         {
             if (!isDropping) StartCoroutine(dropPiece(currentPiece));
         }
+    }
+
+    private void ConfigurePlayers()
+    {
+        if (!PlayerVsAI) playerOneAI = FindObjectsOfType<PlayerOneAI>()[0];
+        playerTwoAI = FindObjectsOfType<PlayerTwoAI>()[0];
     }
 
     private void GetUserInput()
@@ -123,19 +134,14 @@ public class GameController : MonoBehaviour
     private void AdjustNumPiecesToWin()
     {
         int max = Mathf.Max(Config.numRows, Config.numColumns);
-
-        if (Config.numPiecesToWin > max)
-            Config.numPiecesToWin = max;
+        if (Config.numPiecesToWin > max) Config.numPiecesToWin = max;
     }
 
     private void CreateFieldGameObject()
     {
         field = new List<List<Piece>>();
         gameObjectField = GameObject.Find("Field");
-        if (gameObjectField != null)
-        {
-            DestroyImmediate(gameObjectField);
-        }
+        if (gameObjectField != null) DestroyImmediate(gameObjectField);
         gameObjectField = new GameObject("Field");
     }
 
@@ -157,13 +163,22 @@ public class GameController : MonoBehaviour
     private void CenterCamera()
     {
         Camera.main.transform.position = new Vector3(
-            (Config.numColumns - 1) / 2.0f, -((Config.numRows - 1) / 2.0f), Camera.main.transform.position.z);
+            (Config.numColumns - 1) / 2.0f, 
+            -((Config.numRows - 1) / 2.0f),
+            Camera.main.transform.position.z
+        );
 
         winningText.transform.position = new Vector3(
-            (Config.numColumns - 1) / 2.0f, -((Config.numRows - 1) / 2.0f) + 1, winningText.transform.position.z);
+            (Config.numColumns - 1) / 2.0f,
+            -((Config.numRows - 1) / 2.0f) + 1,
+            winningText.transform.position.z
+        );
 
         btnPlayAgain.transform.position = new Vector3(
-            (Config.numColumns - 1) / 2.0f, -((Config.numRows - 1) / 2.0f) - 1, btnPlayAgain.transform.position.z);
+            (Config.numColumns - 1) / 2.0f,
+            -((Config.numRows - 1) / 2.0f) - 1,
+            btnPlayAgain.transform.position.z
+        );
     }
 
 
@@ -171,17 +186,21 @@ public class GameController : MonoBehaviour
 	{
         Vector3 spawnPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
 
-        if (!isPlayerOneTurn)
-		{
+        if (!isPlayerOneTurn) 
+        {
+            List<List<Piece>> temp = field;
             spawnPos = new Vector3(playerTwoAI.nextMove(), 0, 0);
+            field = temp;
         }
 
         if (isPlayerOneTurn && playerOneAI != null)
         {
+            List<List<Piece>> temp = field;
             spawnPos = new Vector3(playerOneAI.nextMove(), 0, 0);
+            field = temp;
         }
 
-		GameObject g = Instantiate(
+		GameObject piece = Instantiate(
 				isPlayerOneTurn ? playerOnePiece : playerTwoPiece,
 				new Vector3(
 				    Mathf.Clamp(spawnPos.x, 0, Config.numColumns -1), 
@@ -189,7 +208,7 @@ public class GameController : MonoBehaviour
 				    Quaternion.identity
                 ) as GameObject;
 
-		return g;
+		return piece;
 	}
 
 	void UpdatePlayAgainButton()
@@ -213,10 +232,7 @@ public class GameController : MonoBehaviour
 			btnPlayAgain.GetComponent<Renderer>().material.color = btnPlayAgainOrigColor;
 		}
 			
-		if(Input.touchCount == 0)
-		{
-			btnPlayAgainTouching = false;
-		}
+		if(Input.touchCount == 0) btnPlayAgainTouching = false;
 	}
 
 	IEnumerator dropPiece(GameObject gObject)
@@ -247,21 +263,21 @@ public class GameController : MonoBehaviour
 		if(foundFreeCell)
 		{
 			// Instantiate a new Piece, disable the temporary
-			GameObject g = Instantiate (gObject) as GameObject;
+			GameObject newPiece = Instantiate (gObject) as GameObject;
 			currentPiece.GetComponent<Renderer>().enabled = false;
 
 			float distance = Vector3.Distance(startPosition, endPosition);
 
-			float t = 0;
-			while(t < 1)
+			float elapsedTime = 0;
+			while(elapsedTime < 1)
 			{
-				t += Time.deltaTime * Config.dropTime * ((Config.numRows - distance) + 1);
+                elapsedTime += Time.deltaTime * Config.dropTime * ((Config.numRows - distance) + 1);
 
-				g.transform.position = Vector3.Lerp (startPosition, endPosition, t);
+                newPiece.transform.position = Vector3.Lerp (startPosition, endPosition, elapsedTime);
 				yield return null;
 			}
 
-			g.transform.parent = gameObjectField.transform;
+            newPiece.transform.parent = gameObjectField.transform;
 
 			// remove the temporary gameobject
 			DestroyImmediate(currentPiece);
@@ -270,14 +286,12 @@ public class GameController : MonoBehaviour
 			StartCoroutine(Won());
 
 			// wait until winning check is done
-			while(isCheckingForWinner)
-				yield return null;
+			while(isCheckingForWinner) yield return null;
 
 			isPlayerOneTurn = !isPlayerOneTurn;
 		}
 
 		isDropping = false;
-
 		yield return 0;
 	}
 
@@ -294,17 +308,15 @@ public class GameController : MonoBehaviour
 				int layermask = isPlayerOneTurn ? (1 << 8) : (1 << 9);
 
 				// If its Players turn ignore red as Starting piece and wise versa
-				if(field[x][y] != (isPlayerOneTurn ? Piece.PlayerOne : Piece.PlayerTwo))
-				{
-					continue;
-				}
+				if(field[x][y] != (isPlayerOneTurn ? Piece.PlayerOne : Piece.PlayerTwo)) continue;
 
 				// shoot a ray of length 'numPiecesToWin - 1' to the right to test horizontally
 				RaycastHit[] hitsHorz = Physics.RaycastAll(
 					new Vector3(x, y * -1, 0),
 					Vector3.right,
                     Config.numPiecesToWin - 1,
-					layermask);
+					layermask
+                );
 
 				// return true (won) if enough hits
 				if(hitsHorz.Length == Config.numPiecesToWin - 1)
@@ -336,7 +348,8 @@ public class GameController : MonoBehaviour
 						new Vector3(x, y * -1, 0), 
 						new Vector3(-1 , 1), 
 						length, 
-						layermask);
+						layermask
+                    );
 						
 					if(hitsDiaLeft.Length == Config.numPiecesToWin - 1)
 					{
@@ -395,6 +408,7 @@ public class GameController : MonoBehaviour
 		}
 		return false;
 	}
+
 }
 
 

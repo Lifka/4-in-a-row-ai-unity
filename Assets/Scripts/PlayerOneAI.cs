@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AI : MonoBehaviour
+public class PlayerOneAI : AI
 {
     /**
      * GameController.field es el tablero. Podemos acceder a una posición concreta mediante GameController.field[x][y]
@@ -18,7 +18,7 @@ public class AI : MonoBehaviour
      *  Devuelve el índice de la columna en la que caerá la ficha
      *  La columna que está más a la izquierda es la 0, la columna que está más a la derecha es Config.numColumns-1 (==> 6)
      **/
-    public int nextMove()
+    public override int nextMove()
     {
         int column = -1; // Valor nulo
         List<int> possibleMoves = GetPossibleMoves();
@@ -34,17 +34,24 @@ public class AI : MonoBehaviour
     }
 
     /**
-     *  Devuelve todas las posiciones del tablero vacías 
+     *  [Función de ejemplo, se puede borrar]
+     *  Devuelve todas las columnas del tablero vacías. Devolverá la misma columna tantas veces como casillas
+     *  tenga disponibles. Por lo tanto, si escogemos la columna aleatoriamente, habrá más
+     *  posibilidad de seleccionar nuestro próximo movimiento como aquella columna que tenga más casillas vacías.
      **/
     public List<int> GetPossibleMoves()
     {
         List<int> possibleMoves = new List<int>();
+
+        // Recorremos todo el tablero
         for (int x = 0; x < Config.numColumns; x++)
         {
             for (int y = 0; y < Config.numRows; y++)
             {
+                // Si la casilla vale GameController.Piece.Empty, significa que está libre
                 if (GameController.field[x][y] == GameController.Piece.Empty)
                 {
+                    // Guardamos la columna
                     possibleMoves.Add(x);
                 }
             }
@@ -53,4 +60,3 @@ public class AI : MonoBehaviour
         return possibleMoves;
     }
 }
-
