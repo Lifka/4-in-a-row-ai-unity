@@ -3,21 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 
-[RequireComponent(typeof(Config))]
 public class GameController : MonoBehaviour
 {
-    public enum Piece
-    {
-        Empty,
-        PlayerOne,
-        PlayerTwo
-    }
-
     public bool PlayerVsAI = true;
     public string PlayerOneName = "You";
     public string PlayerTwoName = "Dummy AI";
-
-
 
     private PlayerOneAI playerOneAI;
     private PlayerTwoAI playerTwoAI;
@@ -25,7 +15,7 @@ public class GameController : MonoBehaviour
     public GameObject playerOnePiece;
     public GameObject playerTwoPiece;
 
-    public GameObject pieceField;
+    public GameObject pieceboard;
     public GameObject winningText;
 
     string playerWonText = "Winner:";
@@ -36,11 +26,11 @@ public class GameController : MonoBehaviour
     Color btnPlayAgainOrigColor;
     Color btnPlayAgainHoverColor = new Color(255, 143, 4);
 
-    GameObject gameObjectField;
+    GameObject gameObjectboard;
     GameObject currentPiece;
 
     [HideInInspector]
-    public static List<List<Piece>> field;
+    public static List<List<Piece>> board;
 
     bool isPlayerOneTurn = true;
     bool isLoading = true;
@@ -56,7 +46,7 @@ public class GameController : MonoBehaviour
         AdjustNumPiecesToWin();
 
         isLoading = true;
-        CreateField();
+        Createboard();
         isLoading = false;
         CenterCamera();
 
@@ -87,7 +77,7 @@ public class GameController : MonoBehaviour
             Vector3 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             currentPiece.transform.position = new Vector3(
                 Mathf.Clamp(pos.x, 0, Config.numColumns - 1),
-                gameObjectField.transform.position.y + 1, 
+                gameObjectboard.transform.position.y + 1, 
                 0
             );
 
@@ -137,25 +127,25 @@ public class GameController : MonoBehaviour
         if (Config.numPiecesToWin > max) Config.numPiecesToWin = max;
     }
 
-    private void CreateFieldGameObject()
+    private void CreateboardGameObject()
     {
-        field = new List<List<Piece>>();
-        gameObjectField = GameObject.Find("Field");
-        if (gameObjectField != null) DestroyImmediate(gameObjectField);
-        gameObjectField = new GameObject("Field");
+        board = new List<List<Piece>>();
+        gameObjectboard = GameObject.Find("board");
+        if (gameObjectboard != null) DestroyImmediate(gameObjectboard);
+        gameObjectboard = new GameObject("board");
     }
 
-    void CreateField()
+    void Createboard()
     {
-        CreateFieldGameObject();
+        CreateboardGameObject();
 
         for (int x = 0; x < Config.numColumns; x++)
         {
-            field.Add(new List<Piece>());
+            board.Add(new List<Piece>());
             for (int y = 0; y < Config.numRows; y++)
             {
-                field[x].Add(Piece.Empty);
-                Instantiate(pieceField, new Vector3(x, y * -1, -1), Quaternion.identity, gameObjectField.transform);
+                board[x].Add(Piece.Empty);
+                Instantiate(pieceboard, new Vector3(x, y * -1, -1), Quaternion.identity, gameObjectboard.transform);
             }
         }
     }
@@ -188,23 +178,23 @@ public class GameController : MonoBehaviour
 
         if (!isPlayerOneTurn) 
         {
-            List<List<Piece>> temp = field;
+            List<List<Piece>> temp = board;
             spawnPos = new Vector3(playerTwoAI.nextMove(), 0, 0);
-            field = temp;
+            board = temp;
         }
 
         if (isPlayerOneTurn && playerOneAI != null)
         {
-            List<List<Piece>> temp = field;
+            List<List<Piece>> temp = board;
             spawnPos = new Vector3(playerOneAI.nextMove(), 0, 0);
-            field = temp;
+            board = temp;
         }
 
 		GameObject piece = Instantiate(
 				isPlayerOneTurn ? playerOnePiece : playerTwoPiece,
 				new Vector3(
 				    Mathf.Clamp(spawnPos.x, 0, Config.numColumns -1), 
-				    gameObjectField.transform.position.y + 1, 0),
+				    gameObjectboard.transform.position.y + 1, 0),
 				    Quaternion.identity
                 ) as GameObject;
 
@@ -223,7 +213,7 @@ public class GameController : MonoBehaviour
 			{
 				btnPlayAgainTouching = true;
 					
-				//CreateField();
+				//Createboard();
                 SceneManager.LoadScene(0);
 			}
 		}
@@ -250,10 +240,10 @@ public class GameController : MonoBehaviour
 		bool foundFreeCell = false;
 		for(int i = Config.numRows -1; i >= 0; i--)
 		{
-			if(field[x][i] == 0)
+			if(board[x][i] == 0)
 			{
 				foundFreeCell = true;
-				field[x][i] = isPlayerOneTurn ? Piece.PlayerOne : Piece.PlayerTwo;
+				board[x][i] = isPlayerOneTurn ? Piece.PlayerOne : Piece.PlayerTwo;
 				endPosition = new Vector3(x, i * -1, startPosition.z);
 
 				break;
@@ -277,7 +267,7 @@ public class GameController : MonoBehaviour
 				yield return null;
 			}
 
-            newPiece.transform.parent = gameObjectField.transform;
+            newPiece.transform.parent = gameObjectboard.transform;
 
 			// remove the temporary gameobject
 			DestroyImmediate(currentPiece);
@@ -308,7 +298,7 @@ public class GameController : MonoBehaviour
 				int layermask = isPlayerOneTurn ? (1 << 8) : (1 << 9);
 
 				// If its Players turn ignore red as Starting piece and wise versa
-				if(field[x][y] != (isPlayerOneTurn ? Piece.PlayerOne : Piece.PlayerTwo)) continue;
+				if(board[x][y] != (isPlayerOneTurn ? Piece.PlayerOne : Piece.PlayerTwo)) continue;
 
 				// shoot a ray of length 'numPiecesToWin - 1' to the right to test horizontally
 				RaycastHit[] hitsHorz = Physics.RaycastAll(
@@ -384,7 +374,7 @@ public class GameController : MonoBehaviour
 		else 
 		{
 			// check if there are any empty cells left, if not set game over and update text to show a draw
-			if(!FieldContainsEmptyCell())
+			if(!boardContainsEmptyCell())
 			{
 				gameOver = true;
 				winningText.GetComponent<TextMesh>().text = drawText;
@@ -396,13 +386,13 @@ public class GameController : MonoBehaviour
 		yield return 0;
 	}
 
-	bool FieldContainsEmptyCell()
+	bool boardContainsEmptyCell()
 	{
 		for(int x = 0; x < Config.numColumns; x++)
 		{
 			for(int y = 0; y < Config.numRows; y++)
 			{
-				if(field[x][y] == Piece.Empty)
+				if(board[x][y] == Piece.Empty)
 					return true;
 			}
 		}

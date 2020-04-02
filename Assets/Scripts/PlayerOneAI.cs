@@ -5,12 +5,12 @@ using UnityEngine;
 public class PlayerOneAI : AI
 {
     /**
-     * GameController.field es el tablero. Podemos acceder a una posición concreta mediante GameController.field[x][y]
+     * board es el tablero. Podemos acceder a una posición concreta mediante board[x][y]
      * Cada posición contiene un valor que nos indica si está ocupada o no, y qué jugador la ha ocupado.
      * Valores posibles:
-     *    GameController.Piece.Empty ---> Casilla libre
-     *    GameController.Piece.PlayerOne ---> Casilla con una ficha del Player One
-     *    GameController.Piece.PlayerTwo ---> Casilla con una ficha del Player Two
+     *    Piece.Empty ---> Casilla libre
+     *    Piece.PlayerOne ---> Casilla con una ficha del Player One
+     *    Piece.PlayerTwo ---> Casilla con una ficha del Player Two
     **/
 
     /**
@@ -48,8 +48,8 @@ public class PlayerOneAI : AI
         {
             for (int y = 0; y < Config.numRows; y++)
             {
-                // Si la casilla vale GameController.Piece.Empty, significa que está libre
-                if (GameController.field[x][y] == GameController.Piece.Empty)
+                // Si la casilla vale Piece.Empty, significa que está libre
+                if (board[x][y] == Piece.Empty)
                 {
                     // Guardamos la columna
                     possibleMoves.Add(x);
