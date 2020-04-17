@@ -29,7 +29,6 @@ public class PlayerTwoAI : AI
             // Elegimos una columana aleatoria
             column = possibleMoves[Random.Range(0, possibleMoves.Count)];
         }
-
         return column;
     }
 
@@ -44,15 +43,15 @@ public class PlayerTwoAI : AI
         List<int> possibleMoves = new List<int>();
 
         // Recorremos todo el tablero
-        for (int x = 0; x < Config.numColumns; x++)
+        for (int column = 0; column < Config.numColumns; column++)
         {
-            for (int y = 0; y < Config.numRows; y++)
+            for (int row = 0; row < Config.numRows; row++)
             {
                 // Si la casilla vale Piece.Empty, significa que está libre
-                if (board[x][y] == Piece.Empty)
+                if (board[column][row] == Piece.Empty)
                 {
                     // Guardamos la columna
-                    possibleMoves.Add(x);
+                    possibleMoves.Add(column);
                 }
             }
         }

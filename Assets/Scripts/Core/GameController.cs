@@ -171,7 +171,12 @@ public class GameController : MonoBehaviour
         );
     }
 
-
+    bool isAValidColumn(int column)
+    {
+        return column >= Config.numColumns ||
+                column < 0 ||
+                board[column][0] != Piece.Empty;
+    }
 	GameObject SpawnPiece()
 	{
         Vector3 spawnPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -179,14 +184,18 @@ public class GameController : MonoBehaviour
         if (!isPlayerOneTurn) 
         {
             List<List<Piece>> temp = board;
-            spawnPos = new Vector3(playerTwoAI.nextMove(), 0, 0);
+            int spawnColumn = playerTwoAI.nextMove();
+            if (isAValidColumn(spawnColumn)) spawnColumn = GetRandomFreeColumn();
+            spawnPos = new Vector3(spawnColumn, 0, 0);
             board = temp;
         }
 
         if (isPlayerOneTurn && playerOneAI != null)
         {
             List<List<Piece>> temp = board;
-            spawnPos = new Vector3(playerOneAI.nextMove(), 0, 0);
+            int spawnColumn = playerOneAI.nextMove();
+            if (isAValidColumn(spawnColumn)) spawnColumn = GetRandomFreeColumn();
+            spawnPos = new Vector3(spawnColumn, 0, 0);
             board = temp;
         }
 
@@ -399,6 +408,15 @@ public class GameController : MonoBehaviour
 		return false;
 	}
 
+    public int GetRandomFreeColumn()
+    {
+        List<int> possibleMoves = new List<int>();
+        for (int x = 0; x < Config.numColumns; x++)
+            for (int y = 0; y < Config.numRows; y++)
+                if (board[x][y] == Piece.Empty)  possibleMoves.Add(x);
+
+        return possibleMoves[Random.Range(0, possibleMoves.Count)];
+    }
 }
 
 
